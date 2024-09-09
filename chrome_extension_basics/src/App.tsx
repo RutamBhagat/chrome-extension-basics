@@ -12,7 +12,14 @@ function App() {
   useEffect(() => {
     const updateTime = () => {
       const now = new Date();
-      setCurrentTime(now.toLocaleTimeString()); // Update the current time
+      // Set options for 12-hour format with AM/PM
+      const options: Intl.DateTimeFormatOptions = {
+        hour: "numeric", // Use 'numeric' or '2-digit'
+        minute: "numeric", // Use 'numeric' or '2-digit'
+        second: "numeric", // Use 'numeric' or '2-digit'
+        hour12: true, // Enable 12-hour format
+      };
+      setCurrentTime(now.toLocaleTimeString(undefined, options)); // Update the current time
     };
 
     updateTime(); // Set the initial time immediately
@@ -24,7 +31,7 @@ function App() {
 
   return (
     <>
-      <div>
+      <div className="flex justify-center items-center">
         <a href="https://vitejs.dev" target="_blank">
           <img src={viteLogo} className="logo" alt="Vite logo" />
         </a>

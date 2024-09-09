@@ -17,5 +17,8 @@
       "32": "images/icon.png"
     }
   },
-  "permissions": ["sidePanel"]
+  "permissions": ["sidePanel", "action"],
+  "background": {
+    "service_worker": "background.js"
+  }
 }
