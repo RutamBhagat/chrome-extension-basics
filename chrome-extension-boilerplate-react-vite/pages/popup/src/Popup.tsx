@@ -14,6 +14,7 @@ const notificationOptions = {
 
 const Popup = () => {
   const [currentTime, setCurrentTime] = useState('');
+  const [name, setName] = useState('');
 
   // useEffect to set up the interval for updating the current time
   useEffect(() => {
@@ -33,10 +34,15 @@ const Popup = () => {
         console.log('Finished setting badge text.');
       });
     };
+    const setNameFromStorage = async () => {
+      const nameFromStorage = await chrome.storage.sync.get('name');
+      setName(nameFromStorage.name || '???');
+    };
 
-    setBadgeText();
     updateTime(); // Set the initial time immediately
     const intervalId = setInterval(updateTime, 1000); // Update every second
+    setBadgeText();
+    setNameFromStorage();
 
     // Cleanup function to clear the interval on component unmount
     return () => clearInterval(intervalId);
@@ -73,6 +79,9 @@ const Popup = () => {
         <h1>Timer Extension</h1>
         <div className="card">
           <div>Time is {currentTime}</div>
+        </div>
+        <div className="card">
+          <div>Your name is {name}</div>
         </div>
         {/* <button
             className={
