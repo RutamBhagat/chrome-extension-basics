@@ -1,81 +1,96 @@
-import '@src/Options.css';
-
-import { useEffect, useState } from 'react';
-import { useStorage, withErrorBoundary, withSuspense } from '@extension/shared';
+import React, { useEffect, useState } from 'react';
 
 import { Button } from '@extension/ui';
 import { exampleThemeStorage } from '@extension/storage';
-import { useDebounce } from './utils/hooks/debounce';
+import { useStorage } from '@extension/shared';
 
-const Options = () => {
+const Options: React.FC = () => {
   const [name, setName] = useState<string>('');
-  const [time, setTime] = useState<number>(0);
-  const debouncedName = useDebounce(name, 300); // 300ms debounce delay
-  const debouncedTime = useDebounce(time, 300); // 300ms debounce delay
+  const [notificationTimeInSeconds, setNotificationTimeInSeconds] = useState<number>(1000);
+  const [timerRunning, setTimerRunning] = useState<boolean>(false);
+  const theme = useStorage(exampleThemeStorage);
+  const isLight = theme === 'light';
 
   useEffect(() => {
-    const setNameFromStorage = async () => {
-      const nameFromStorage = await chrome.storage.sync.get('name');
-      setName(nameFromStorage.name || '???');
+    const loadData = async () => {
+      const result = await chrome.storage.sync.get(['name', 'notificationTime']);
+      setName(result.name || '');
+      setNotificationTimeInSeconds(result.notificationTime || 1000);
     };
-    const setTimeFromStorage = async () => {
-      const timeFromStorage = await chrome.storage.sync.get('notificationTime');
-      setTime(timeFromStorage.notificationTime || 1000);
-    };
-
-    setNameFromStorage();
-    setTimeFromStorage();
+    loadData();
   }, []);
 
   useEffect(() => {
-    const logName = async () => {
-      console.log('Debounced Name: ', debouncedName);
-      chrome.storage.sync.set({ name: debouncedName });
-      console.log('Name saved to chrome.storage.sync: ', await chrome.storage.sync.get('name'));
+    const saveData = async () => {
+      await chrome.storage.sync.set({ name, notificationTime: notificationTimeInSeconds });
     };
-    logName();
-  }, [debouncedName]);
+    saveData();
+  }, [name, notificationTimeInSeconds]);
 
-  useEffect(() => {
-    const logTime = async () => {
-      console.log('Debounced Time: ', debouncedTime);
-      chrome.storage.sync.set({ notificationTime: debouncedTime });
-      console.log('Time saved to chrome.storage.sync: ', await chrome.storage.sync.get('notificationTime'));
-    };
-    logTime();
-  }, [debouncedTime]);
+  const handleStartTimer = () => {
+    chrome.storage.local.set({ timer: Date.now() + notificationTimeInSeconds * 1000 });
+    setTimerRunning(true);
+  };
 
-  const theme = useStorage(exampleThemeStorage);
-  const isLight = theme === 'light';
-  const logo = isLight ? 'options/logo_horizontal.svg' : 'options/logo_horizontal_dark.svg';
+  const handleStopTimer = () => {
+    chrome.storage.local.remove('timer');
+    setTimerRunning(false);
+  };
+
+  const handleResetTimer = () => {
+    handleStopTimer();
+    setNotificationTimeInSeconds(1000);
+    chrome.storage.sync.set({ notificationTime: 1000 });
+  };
 
   return (
-    <div className={`App-container ${isLight ? 'text-gray-900 bg-slate-50' : 'text-gray-100 bg-gray-800'}`}>
-      <img src={chrome.runtime.getURL(logo)} className="App-logo" alt="logo" />
-      <p>
-        <code>Timer Extension Options</code>
-      </p>
-      <div className="my-10 space-y-4 flex flex-col">
-        <input
-          value={name}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
-          type="text"
-          placeholder="Enter your name!"
-          className="w-23/3 pr-12 pl-3 py-2 text-gray-500 bg-transparent outline-none border focus:border-indigo-600 shadow-sm rounded-lg"
-        />
-        <input
-          value={time}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTime(parseInt(e.target.value, 10))}
-          type="number"
-          placeholder="Enter time for notification!"
-          className="w-23/3 pr-12 pl-3 py-2 text-gray-500 bg-transparent outline-none border focus:border-indigo-600 shadow-sm rounded-lg"
-        />
+    <div
+      className={`${isLight ? 'bg-slate-50 text-gray-900' : 'bg-gray-800 text-gray-100'} min-h-screen flex flex-col justify-center`}>
+      <div className="max-w-xl mx-auto p-4">
+        <h1 className="text-2xl font-bold mb-4 text-center">Timer Extension Options</h1>
+        <div className="space-y-4">
+          <div>
+            <label htmlFor="name" className="block mb-1">
+              Your Name:
+            </label>
+            <input
+              id="name"
+              value={name}
+              onChange={e => setName(e.target.value)}
+              className="w-full p-2 border rounded text-gray-900"
+              type="text"
+              placeholder="Enter your name"
+            />
+          </div>
+          <div>
+            <label htmlFor="notificationTime" className="block mb-1">
+              Notification Time (seconds):
+            </label>
+            <input
+              id="notificationTime"
+              value={notificationTimeInSeconds}
+              onChange={e => setNotificationTimeInSeconds(parseInt(e.target.value, 10) || 1000)}
+              className="w-full p-2 border rounded text-gray-900"
+              type="number"
+              placeholder="Enter time for notification"
+            />
+          </div>
+        </div>
+        <div className="mt-6 space-x-2 flex justify-center">
+          <Button onClick={handleStartTimer} disabled={timerRunning}>
+            Start Timer
+          </Button>
+          <Button onClick={handleStopTimer} disabled={!timerRunning}>
+            Stop Timer
+          </Button>
+          <Button onClick={handleResetTimer}>Reset Timer</Button>
+        </div>
+        <div className="mt-4 flex justify-center">
+          <Button onClick={exampleThemeStorage.toggle}>Toggle theme</Button>
+        </div>
       </div>
-      <Button className="" onClick={exampleThemeStorage.toggle} theme={theme}>
-        Toggle theme
-      </Button>
     </div>
   );
 };
 
-export default withErrorBoundary(withSuspense(Options, <div> Loading ... </div>), <div> Error Occur </div>);
+export default Options;
