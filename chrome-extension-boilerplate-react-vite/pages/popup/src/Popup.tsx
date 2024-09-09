@@ -1,7 +1,6 @@
 import '@src/Popup.css';
 
 import { useStorage, withErrorBoundary, withSuspense } from '@extension/shared';
-
 import { useEffect, useState, type ComponentPropsWithoutRef } from 'react';
 import { exampleThemeStorage } from '@extension/storage';
 
@@ -15,38 +14,47 @@ const notificationOptions = {
 const Popup = () => {
   const [currentTime, setCurrentTime] = useState('');
   const [name, setName] = useState('');
+  const [timer, setTimer] = useState(0);
 
-  // useEffect to set up the interval for updating the current time
   useEffect(() => {
-    const updateTime = () => {
+    const intervalId = setInterval(() => {
       const now = new Date();
-      // Set options for 12-hour format with AM/PM
       const options: Intl.DateTimeFormatOptions = {
-        hour: 'numeric', // Use 'numeric' or '2-digit'
-        minute: 'numeric', // Use 'numeric' or '2-digit'
-        second: 'numeric', // Use 'numeric' or '2-digit'
-        hour12: true, // Enable 12-hour format
+        hour: 'numeric',
+        minute: 'numeric',
+        second: 'numeric',
+        hour12: true,
       };
-      setCurrentTime(now.toLocaleTimeString(undefined, options)); // Update the current time
-    };
-    const setBadgeText = () => {
-      chrome.action.setBadgeText({ text: 'TIME' }, () => {
-        console.log('Finished setting badge text.');
-      });
-    };
+      setCurrentTime(now.toLocaleTimeString(undefined, options));
+    }, 1000);
+
     const setNameFromStorage = async () => {
       const nameFromStorage = await chrome.storage.sync.get('name');
       setName(nameFromStorage.name || '???');
     };
 
-    updateTime(); // Set the initial time immediately
-    const intervalId = setInterval(updateTime, 1000); // Update every second
-    setBadgeText();
+    const setTimerFromStorage = async () => {
+      const timerFromStorage = await chrome.storage.local.get('timer');
+      setTimer(timerFromStorage.timer || 0);
+    };
+
+    setTimerFromStorage();
     setNameFromStorage();
 
-    // Cleanup function to clear the interval on component unmount
-    return () => clearInterval(intervalId);
-  }, []); // Empty dependency array to run only once on mount
+    // Listen for changes to local storage
+    const handleStorageChange = (changes: { [key: string]: chrome.storage.StorageChange }) => {
+      if (changes.timer) {
+        setTimer(changes.timer.newValue || 0);
+      }
+    };
+
+    chrome.storage.onChanged.addListener(handleStorageChange);
+
+    return () => {
+      clearInterval(intervalId);
+      chrome.storage.onChanged.removeListener(handleStorageChange);
+    };
+  }, []);
 
   const theme = useStorage(exampleThemeStorage);
   const isLight = theme === 'light';
@@ -65,7 +73,6 @@ const Popup = () => {
         files: ['/content-runtime/index.iife.js'],
       })
       .catch(err => {
-        // Handling errors related to other paths
         if (err.message.includes('Cannot access a chrome:// URL')) {
           chrome.notifications.create('inject-error', notificationOptions);
         }
@@ -75,23 +82,20 @@ const Popup = () => {
   return (
     <div className={`App ${isLight ? 'bg-slate-50' : 'bg-gray-800'}`}>
       <header className={`App-header ${isLight ? 'text-gray-900' : 'text-gray-100'}`}>
-        <img src={chrome.runtime.getURL(logo)} className="App-logo" alt="logo" />
-        <h1>Timer Extension</h1>
-        <div className="card">
-          <div>Time is {currentTime}</div>
+        <img src={chrome.runtime.getURL(logo)} className="App-logo pt-4" alt="logo" />
+        <div className="">
+          <h1>Timer Extension</h1>
+          <div className="card">
+            <div>Time is {currentTime}</div>
+          </div>
+          <div className="card">
+            <div>Your name is {name}</div>
+          </div>
+          <div className="card">
+            <div>The timer is at: {timer} seconds</div>
+          </div>
+          <ToggleButton>Toggle theme</ToggleButton>
         </div>
-        <div className="card">
-          <div>Your name is {name}</div>
-        </div>
-        {/* <button
-            className={
-              'font-bold mt-4 py-1 px-4 rounded shadow hover:scale-105 ' +
-              (isLight ? 'bg-blue-200 text-black' : 'bg-gray-700 text-white')
-            }
-            onClick={injectContentScript}>
-            Click to inject Content Script
-          </button> */}
-        <ToggleButton>Toggle theme</ToggleButton>
       </header>
     </div>
   );
