@@ -18,11 +18,6 @@ const Options: React.FC = () => {
       setNotificationTimeInSeconds(result.notificationTime || 1000);
     };
     loadData();
-
-    // Check if timer is running
-    chrome.storage.local.get(['timerRunning'], result => {
-      setTimerRunning(result.timerRunning || false);
-    });
   }, []);
 
   useEffect(() => {
@@ -33,18 +28,19 @@ const Options: React.FC = () => {
   }, [name, notificationTimeInSeconds]);
 
   const handleStartTimer = () => {
-    chrome.runtime.sendMessage({ action: 'startTimer' });
+    chrome.storage.local.set({ timerRunning: true });
     setTimerRunning(true);
   };
 
   const handleStopTimer = () => {
-    chrome.runtime.sendMessage({ action: 'stopTimer' });
+    chrome.storage.local.set({ timerRunning: false });
     setTimerRunning(false);
   };
 
   const handleResetTimer = () => {
-    chrome.runtime.sendMessage({ action: 'resetTimer' });
+    chrome.storage.local.set({ timerRunning: false, timer: 0 });
     setTimerRunning(false);
+    chrome.action.setBadgeText({ text: '0' });
   };
 
   return (
