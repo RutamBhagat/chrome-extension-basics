@@ -18,6 +18,11 @@ const Options: React.FC = () => {
       setNotificationTimeInSeconds(result.notificationTime || 1000);
     };
     loadData();
+
+    // Check if timer is running
+    chrome.storage.local.get(['timerRunning'], result => {
+      setTimerRunning(result.timerRunning || false);
+    });
   }, []);
 
   useEffect(() => {
@@ -28,19 +33,18 @@ const Options: React.FC = () => {
   }, [name, notificationTimeInSeconds]);
 
   const handleStartTimer = () => {
-    chrome.storage.local.set({ timer: Date.now() + notificationTimeInSeconds * 1000 });
+    chrome.runtime.sendMessage({ action: 'startTimer' });
     setTimerRunning(true);
   };
 
   const handleStopTimer = () => {
-    chrome.storage.local.remove('timer');
+    chrome.runtime.sendMessage({ action: 'stopTimer' });
     setTimerRunning(false);
   };
 
   const handleResetTimer = () => {
-    handleStopTimer();
-    setNotificationTimeInSeconds(1000);
-    chrome.storage.sync.set({ notificationTime: 1000 });
+    chrome.runtime.sendMessage({ action: 'resetTimer' });
+    setTimerRunning(false);
   };
 
   return (
