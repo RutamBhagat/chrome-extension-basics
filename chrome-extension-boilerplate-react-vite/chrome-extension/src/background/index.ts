@@ -20,13 +20,17 @@ chrome.alarms.onAlarm.addListener(alarm => {
     chrome.storage.local.set({ timer: time });
     chrome.action.setBadgeText({ text: time.toString() });
 
-    if (time % 1000 === 0) {
-      chrome.notifications.create({
-        type: 'basic',
-        iconUrl: '/icon-34.png',
-        title: 'Chrome Timer Extension',
-        message: `1000 seconds have passed, timer is at ${time}`,
-      });
-    }
+    chrome.storage.sync.get(['notificationTime'], result => {
+      let notificationTime = result.notificationTime || 1000;
+
+      if (time % notificationTime === 0) {
+        chrome.notifications.create({
+          type: 'basic',
+          iconUrl: '/icon-34.png',
+          title: 'Chrome Timer Extension',
+          message: `${notificationTime} seconds have passed, timer is at ${time}`,
+        });
+      }
+    });
   });
 });
