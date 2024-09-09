@@ -1,7 +1,9 @@
 import '@src/Popup.css';
+
 import { useStorage, withErrorBoundary, withSuspense } from '@extension/shared';
+
+import { useEffect, useState, type ComponentPropsWithoutRef } from 'react';
 import { exampleThemeStorage } from '@extension/storage';
-import type { ComponentPropsWithoutRef } from 'react';
 
 const notificationOptions = {
   type: 'basic',
@@ -11,6 +13,35 @@ const notificationOptions = {
 } as const;
 
 const Popup = () => {
+  const [currentTime, setCurrentTime] = useState('');
+
+  // useEffect to set up the interval for updating the current time
+  useEffect(() => {
+    const updateTime = () => {
+      const now = new Date();
+      // Set options for 12-hour format with AM/PM
+      const options: Intl.DateTimeFormatOptions = {
+        hour: 'numeric', // Use 'numeric' or '2-digit'
+        minute: 'numeric', // Use 'numeric' or '2-digit'
+        second: 'numeric', // Use 'numeric' or '2-digit'
+        hour12: true, // Enable 12-hour format
+      };
+      setCurrentTime(now.toLocaleTimeString(undefined, options)); // Update the current time
+    };
+    const setBadgeText = () => {
+      chrome.action.setBadgeText({ text: 'TIME' }, () => {
+        console.log('Finished setting badge text.');
+      });
+    };
+
+    setBadgeText();
+    updateTime(); // Set the initial time immediately
+    const intervalId = setInterval(updateTime, 1000); // Update every second
+
+    // Cleanup function to clear the interval on component unmount
+    return () => clearInterval(intervalId);
+  }, []); // Empty dependency array to run only once on mount
+
   const theme = useStorage(exampleThemeStorage);
   const isLight = theme === 'light';
   const logo = isLight ? 'popup/logo_vertical.svg' : 'popup/logo_vertical_dark.svg';
@@ -39,17 +70,18 @@ const Popup = () => {
     <div className={`App ${isLight ? 'bg-slate-50' : 'bg-gray-800'}`}>
       <header className={`App-header ${isLight ? 'text-gray-900' : 'text-gray-100'}`}>
         <img src={chrome.runtime.getURL(logo)} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>pages/popup/src/Popup.tsx</code>
-        </p>
-        <button
-          className={
-            'font-bold mt-4 py-1 px-4 rounded shadow hover:scale-105 ' +
-            (isLight ? 'bg-blue-200 text-black' : 'bg-gray-700 text-white')
-          }
-          onClick={injectContentScript}>
-          Click to inject Content Script
-        </button>
+        <h1>Timer Extension</h1>
+        <div className="card">
+          <div>Time is {currentTime}</div>
+        </div>
+        {/* <button
+            className={
+              'font-bold mt-4 py-1 px-4 rounded shadow hover:scale-105 ' +
+              (isLight ? 'bg-blue-200 text-black' : 'bg-gray-700 text-white')
+            }
+            onClick={injectContentScript}>
+            Click to inject Content Script
+          </button> */}
         <ToggleButton>Toggle theme</ToggleButton>
       </header>
     </div>

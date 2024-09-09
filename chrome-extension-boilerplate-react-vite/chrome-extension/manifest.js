@@ -36,12 +36,16 @@ const manifest = deepmerge(
     },
     action: {
       default_popup: 'popup/index.html',
-      default_icon: 'icon-34.png',
+      default_icon: {
+        34: 'icon-34.png',
+        128: 'icon-128.png',
+      },
     },
     // chrome_url_overrides: {
     //   newtab: 'new-tab/index.html',
     // },
     icons: {
+      34: 'icon-34.png',
       128: 'icon-128.png',
     },
     content_scripts: [
