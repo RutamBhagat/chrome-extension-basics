@@ -1,0 +1,30 @@
+{
+  "extensionDescription": {
+    "description": "Extension description",
+    "message": "Pomodoro timer extension developed with Vite, React, and TypeScript to enhance productivity."
+  },
+  "extensionName": {
+    "description": "Extension name",
+    "message": "Pomodoro Timer Extension"
+  },
+  "toggleTheme": {
+    "message": "Toggle theme"
+  },
+  "loading": {
+    "message": "Loading..."
+  },
+  "greeting": {
+    "description": "Greeting message",
+    "message": "Hello, My name is $NAME$, let's boost your productivity!",
+    "placeholders": {
+      "name": {
+        "content": "$1",
+        "example": "Alice"
+      }
+    }
+  },
+  "hello": {
+    "description": "Placeholder example",
+    "message": "Hello $1, ready to focus?"
+  }
+}
