@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui";
-import TaskInput from "@/components/popup/TaskInput";
+import TaskInput from "./components/popup/TaskInput";
 
 interface Task {
   id: number;
@@ -11,76 +11,70 @@ interface Task {
 function App() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [timer, setTimer] = useState(25 * 60); // 25 minutes in seconds
+  const [defaultTime, setDefaultTime] = useState(25); // Default time from Options
   const [isActive, setIsActive] = useState(false);
-  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Load tasks from storage when the component mounts
+  // Load default time and current timer from background
   useEffect(() => {
-    chrome.storage.sync.get(["tasks"], (result) => {
+    chrome.storage.sync.get(["defaultTime", "tasks"], (result) => {
+      if (result.defaultTime) {
+        setDefaultTime(result.defaultTime);
+      }
       if (result.tasks) {
         setTasks(result.tasks);
       }
     });
+
+    chrome.runtime.sendMessage({ action: "getTimerState" }, (response) => {
+      setTimer(response.timerValue);
+      setIsActive(response.status === "running");
+    });
+
+    // Set up a listener for timer updates from background.ts
+    const handleTimerUpdate = (message: any) => {
+      if (message.action === "updateTimer") {
+        setTimer(message.timerValue);
+      }
+    };
+
+    chrome.runtime.onMessage.addListener(handleTimerUpdate);
+
+    // Clean up listener when component unmounts
+    return () => {
+      chrome.runtime.onMessage.removeListener(handleTimerUpdate);
+    };
   }, []);
 
-  // Function to sync tasks after a 500ms delay
-  const syncTasksWithDelay = (newTasks: Task[]) => {
-    // Clear the previous timeout if a new change happens before 500ms
-    if (debounceTimeoutRef.current) {
-      clearTimeout(debounceTimeoutRef.current);
-    }
-
-    // Set a new timeout for syncing after 500ms of inactivity
-    debounceTimeoutRef.current = setTimeout(() => {
-      chrome.storage.sync.set({ tasks: newTasks });
-    }, 500);
-  };
-
-  // Add a new task
-  const addTask = () => {
-    const newTasks = [...tasks, { id: Date.now(), value: "" }];
-    setTasks(newTasks);
-    syncTasksWithDelay(newTasks); // Sync changes with delay
-  };
-
-  // Delete a task
-  const deleteTask = (id: number) => {
-    const newTasks = tasks.filter((task) => task.id !== id);
-    setTasks(newTasks);
-    syncTasksWithDelay(newTasks); // Sync changes with delay
-  };
-
-  // Update a task
-  const updateTask = (id: number, value: string) => {
-    const newTasks = tasks.map((task) =>
-      task.id === id ? { ...task, value } : task
-    );
-    setTasks(newTasks);
-    syncTasksWithDelay(newTasks); // Sync changes with delay
-  };
-
-  // Timer functionality
+  // Save tasks to sync when tasks change
   useEffect(() => {
-    let interval: NodeJS.Timeout | null = null;
-    if (isActive && timer > 0) {
-      interval = setInterval(() => {
-        setTimer((prevTimer) => prevTimer - 1);
-      }, 1000);
-    } else if (timer === 0) {
-      setIsActive(false);
+    if (tasks.length > 0) {
+      chrome.storage.sync.set({ tasks });
     }
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [isActive, timer]);
+  }, [tasks]);
 
-  // Start the timer
-  const startTimer = () => setIsActive(true);
+  // Start/stop/reset the timer by sending messages to background.ts
+  const startTimer = () => {
+    chrome.runtime.sendMessage({ action: "startTimer" }, (response) => {
+      setIsActive(true);
+      setTimer(response.timerValue);
+    });
+  };
 
-  // Reset the timer
+  const stopTimer = () => {
+    chrome.runtime.sendMessage({ action: "stopTimer" }, (response) => {
+      setIsActive(false);
+      setTimer(response.timerValue);
+    });
+  };
+
   const resetTimer = () => {
-    setIsActive(false);
-    setTimer(25 * 60);
+    chrome.runtime.sendMessage(
+      { action: "resetTimer", defaultTime },
+      (response) => {
+        setIsActive(false);
+        setTimer(response.timerValue);
+      }
+    );
   };
 
   // Format the time to display as MM:SS
@@ -106,9 +100,9 @@ function App() {
         <div className="flex flex-col gap-3 mb-6">
           <Button
             className="bg-indigo-600 text-white hover:bg-indigo-700 rounded-xl py-3 transition-all duration-300 ease-in-out"
-            onClick={startTimer}
+            onClick={isActive ? stopTimer : startTimer}
           >
-            Start Timer
+            {isActive ? "Stop Timer" : "Start Timer"}
           </Button>
           <Button
             className="bg-gray-700 text-indigo-300 hover:bg-gray-600 rounded-xl py-3 transition-all duration-300 ease-in-out"
@@ -118,7 +112,12 @@ function App() {
           </Button>
           <Button
             className="bg-gray-700 text-indigo-300 hover:bg-gray-600 rounded-xl py-3 transition-all duration-300 ease-in-out"
-            onClick={addTask}
+            onClick={() =>
+              setTasks((prevTasks) => [
+                ...prevTasks,
+                { id: Date.now(), value: "" },
+              ])
+            }
           >
             Add Task
           </Button>
@@ -129,8 +128,18 @@ function App() {
               key={task.id}
               id={task.id}
               value={task.value}
-              onDelete={deleteTask}
-              onUpdate={updateTask}
+              onDelete={(id) =>
+                setTasks((prevTasks) =>
+                  prevTasks.filter((task) => task.id !== id)
+                )
+              }
+              onUpdate={(id, value) =>
+                setTasks((prevTasks) =>
+                  prevTasks.map((task) =>
+                    task.id === id ? { ...task, value } : task
+                  )
+                )
+              }
             />
           ))}
         </div>
