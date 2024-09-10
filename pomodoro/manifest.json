@@ -1,8 +1,16 @@
 {
   "manifest_version": 3,
-  "name": "Chrome extension BoilerPlate",
+  "name": "Pomodoro Timer Extension",
   "version": "1.0.0",
-  "action": { "default_popup": "index.html" },
+  "description": "A Pomodoro timer extension for Chrome",
+  "icons": {
+    "34": "src/assets/images/icon-34.png",
+    "128": "src/assets/images/icon-128.png"
+  },
+  "action": {
+    "default_popup": "index.html",
+    "default_icon": "src/assets/images/icon-34.png"
+  },
   "background": {
     "service_worker": "./src/background/background.ts"
   },
