@@ -1,12 +1,14 @@
 import '@src/SidePanel.css';
+
 import { useStorage, withErrorBoundary, withSuspense } from '@extension/shared';
-import { exampleThemeStorage } from '@extension/storage';
+
 import type { ComponentPropsWithoutRef } from 'react';
+import { exampleThemeStorage } from '@extension/storage';
 
 const SidePanel = () => {
   const theme = useStorage(exampleThemeStorage);
   const isLight = theme === 'light';
-  const logo = isLight ? 'side-panel/logo_vertical.svg' : 'side-panel/logo_vertical_dark.svg';
+  const logo = isLight ? 'side-panel/logo_vertical.jpg' : 'side-panel/logo_vertical_dark.jpg';
 
   return (
     <div className={`App ${isLight ? 'bg-slate-50' : 'bg-gray-800'}`}>

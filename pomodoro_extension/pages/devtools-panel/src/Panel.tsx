@@ -1,12 +1,14 @@
 import '@src/Panel.css';
+
 import { useStorage, withErrorBoundary, withSuspense } from '@extension/shared';
-import { exampleThemeStorage } from '@extension/storage';
+
 import type { ComponentPropsWithoutRef } from 'react';
+import { exampleThemeStorage } from '@extension/storage';
 
 const Panel = () => {
   const theme = useStorage(exampleThemeStorage);
   const isLight = theme === 'light';
-  const logo = isLight ? 'devtools-panel/logo_horizontal.svg' : 'devtools-panel/logo_horizontal_dark.svg';
+  const logo = isLight ? 'devtools-panel/logo_horizontal.jpg' : 'devtools-panel/logo_horizontal_dark.jpg';
 
   return (
     <div className={`App ${isLight ? 'bg-slate-50' : 'bg-gray-800'}`}>

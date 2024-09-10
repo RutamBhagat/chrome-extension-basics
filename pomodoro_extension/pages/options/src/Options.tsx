@@ -1,12 +1,14 @@
 import '@src/Options.css';
+
 import { useStorage, withErrorBoundary, withSuspense } from '@extension/shared';
-import { exampleThemeStorage } from '@extension/storage';
+
 import { Button } from '@extension/ui';
+import { exampleThemeStorage } from '@extension/storage';
 
 const Options = () => {
   const theme = useStorage(exampleThemeStorage);
   const isLight = theme === 'light';
-  const logo = isLight ? 'options/logo_horizontal.svg' : 'options/logo_horizontal_dark.svg';
+  const logo = isLight ? 'options/logo_horizontal.jpg' : 'options/logo_horizontal_dark.jpg';
 
   return (
     <div className={`App ${isLight ? 'text-gray-900 bg-slate-50' : 'text-gray-100 bg-gray-800'}`}>
@@ -14,9 +16,7 @@ const Options = () => {
       <p>
         Edit <code>pages/options/src/Options.tsx</code>
       </p>
-      <Button className="mt-4" onClick={exampleThemeStorage.toggle} theme={theme}>
-        Toggle theme
-      </Button>
+      <Button className="mt-4">Toggle theme</Button>
     </div>
   );
 };
