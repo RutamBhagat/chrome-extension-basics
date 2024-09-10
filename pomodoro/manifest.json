@@ -20,5 +20,6 @@
       "js": ["src/content/content.tsx"],
       "matches": ["<all_urls>"]
     }
-  ]
+  ],
+  "permissions": ["storage"]
 }
