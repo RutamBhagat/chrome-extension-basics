@@ -1,42 +1,30 @@
+// OptionsApp.tsx
+
 import { Button, Input } from "@/components/ui";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Save } from "lucide-react";
 
 function OptionsApp() {
-  const [defaultTime, setDefaultTime] = useState(25); // Default value
-  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [defaultTime, setDefaultTime] = useState(25);
 
-  // Load default time from chrome storage when the component mounts
   useEffect(() => {
-    chrome.storage.sync.get("defaultTime", (result) => {
-      if (result.defaultTime) {
-        setDefaultTime(result.defaultTime);
+    chrome.storage.local.get("timerState", (result) => {
+      if (result.timerState && result.timerState.defaultTime) {
+        setDefaultTime(result.timerState.defaultTime);
       }
     });
   }, []);
 
-  // Debounced save to chrome storage
-  const saveDefaultTimeWithDelay = (time: number) => {
-    if (debounceTimeoutRef.current) {
-      clearTimeout(debounceTimeoutRef.current);
-    }
-
-    debounceTimeoutRef.current = setTimeout(() => {
-      chrome.storage.sync.set({ defaultTime: time });
-    }, 500);
-  };
-
-  // Handle change of default time input
-  const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newTime = Number(e.target.value);
-    setDefaultTime(newTime); // Update local state immediately for better UX
-    saveDefaultTimeWithDelay(newTime); // Save to sync storage with 500ms debounce
-  };
-
-  // Save immediately when the "Save Settings" button is clicked
   const handleSaveClick = () => {
-    chrome.storage.sync.set({ defaultTime });
+    chrome.storage.local.get("timerState", (result) => {
+      const updatedTimerState = {
+        ...result.timerState,
+        defaultTime: defaultTime,
+      };
+      chrome.storage.local.set({ timerState: updatedTimerState });
+      chrome.runtime.sendMessage({ action: "updateDefaultTime", defaultTime });
+    });
   };
 
   return (
@@ -53,7 +41,7 @@ function OptionsApp() {
             <Input
               type="number"
               value={defaultTime}
-              onChange={handleTimeChange}
+              onChange={(e) => setDefaultTime(Number(e.target.value))}
               className="w-full bg-gray-700 border-gray-600 text-white rounded-xl mt-4"
               min={1}
               max={60}

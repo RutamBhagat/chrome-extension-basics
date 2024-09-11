@@ -1,55 +1,119 @@
-console.log("Hello world from bakground script");
+// background.ts
 
-let timerInterval: NodeJS.Timeout | null = null;
-let timerValue = 25 * 60; // Default 25 minutes
-let isTimerActive = false;
+console.log("Hello world from background script");
 
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.action === "startTimer") {
-    startTimer();
-    sendResponse({ status: "started", timerValue });
-  } else if (message.action === "stopTimer") {
-    stopTimer();
-    sendResponse({ status: "stopped", timerValue });
-  } else if (message.action === "resetTimer") {
-    resetTimer(message.defaultTime);
-    sendResponse({ status: "reset", timerValue });
-  } else if (message.action === "getTimerState") {
-    sendResponse({
-      status: isTimerActive ? "running" : "stopped",
-      timerValue,
-    });
+export interface TimerState {
+  value: number;
+  isActive: boolean;
+  defaultTime: number;
+}
+
+export let timerState: TimerState = {
+  value: 25 * 60,
+  isActive: false,
+  defaultTime: 25,
+};
+
+chrome.runtime.onInstalled.addListener(() => {
+  chrome.storage.local.get(["timerState"], (result) => {
+    if (result.timerState) {
+      timerState = result.timerState;
+    } else {
+      chrome.storage.local.set({ timerState });
+    }
+  });
+});
+
+chrome.runtime.onMessage.addListener((message, _, sendResponse) => {
+  switch (message.action) {
+    case "startTimer":
+      startTimer();
+      break;
+    case "stopTimer":
+      stopTimer();
+      break;
+    case "resetTimer":
+      resetTimer(message.defaultTime);
+      break;
+    case "getTimerState":
+      sendResponse(timerState);
+      return true;
+    case "updateDefaultTime":
+      updateDefaultTime(message.defaultTime);
+      break;
   }
 });
 
 function startTimer() {
-  if (!isTimerActive) {
-    isTimerActive = true;
-    timerInterval = setInterval(() => {
-      timerValue -= 1;
-      chrome.storage.sync.set({ timerValue });
-
-      // Send timer update to all open popup instances
-      chrome.runtime.sendMessage({ action: "updateTimer", timerValue });
-
-      if (timerValue <= 0) {
-        stopTimer();
-      }
-    }, 1000);
+  if (!timerState.isActive) {
+    timerState.isActive = true;
+    updateTimerState();
+    chrome.alarms.create("pomodoroTimer", { periodInMinutes: 1 / 60 });
   }
 }
 
 function stopTimer() {
-  if (timerInterval) {
-    clearInterval(timerInterval);
-    timerInterval = null;
-  }
-  isTimerActive = false;
-  chrome.storage.sync.set({ timerValue });
+  chrome.alarms.clear("pomodoroTimer");
+  timerState.isActive = false;
+  updateTimerState();
 }
 
 function resetTimer(defaultTime: number) {
   stopTimer();
-  timerValue = defaultTime * 60;
-  chrome.storage.sync.set({ timerValue });
+  timerState.value = defaultTime * 60;
+  timerState.defaultTime = defaultTime;
+  updateTimerState();
 }
+
+function updateDefaultTime(newDefaultTime: number) {
+  timerState.defaultTime = newDefaultTime;
+  updateTimerState();
+}
+
+function updateTimerState() {
+  chrome.storage.local.set({ timerState });
+  chrome.runtime.sendMessage({ action: "updateTimer", timerState });
+}
+
+function notifyUser() {
+  chrome.notifications.create(
+    {
+      type: "basic",
+      iconUrl: "/images/icon-128.png",
+      title: "Pomodoro Timer",
+      message: "Time's up! Take a break.",
+      buttons: [{ title: "Start Break" }, { title: "Dismiss" }],
+      priority: 2,
+    },
+    (notificationId) => {
+      if (chrome.runtime.lastError) {
+        console.error("Notification error:", chrome.runtime.lastError);
+      } else {
+        console.log("Notification created with ID:", notificationId);
+      }
+    }
+  );
+}
+
+chrome.alarms.onAlarm.addListener((alarm) => {
+  if (alarm.name === "pomodoroTimer") {
+    timerState.value -= 1;
+    if (timerState.value <= 0) {
+      stopTimer();
+      notifyUser();
+    } else {
+      updateTimerState();
+    }
+  }
+});
+
+chrome.notifications.onButtonClicked.addListener(
+  (notificationId, buttonIndex) => {
+    if (buttonIndex === 0) {
+      // Start break timer (e.g., 5 minutes)
+      resetTimer(5);
+      startTimer();
+    }
+    chrome.notifications.clear(notificationId);
+  }
+);

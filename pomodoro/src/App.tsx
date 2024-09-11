@@ -1,7 +1,13 @@
-import { useEffect, useState } from "react";
+// App.tsx
+
+import {
+  TimerState,
+  timerState as timerStateDefault,
+} from "@/background/background";
+import { useCallback, useEffect, useState } from "react";
 
 import { Button } from "@/components/ui";
-import TaskInput from "./components/popup/TaskInput";
+import TaskInput from "@/components/popup/TaskInput";
 
 interface Task {
   id: number;
@@ -10,74 +16,56 @@ interface Task {
 
 function App() {
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [timer, setTimer] = useState(25 * 60); // 25 minutes in seconds
-  const [defaultTime, setDefaultTime] = useState(25); // Default time from Options
-  const [isActive, setIsActive] = useState(false);
+  const [timerState, setTimerState] = useState<TimerState>(timerStateDefault);
 
-  // Load default time and current timer from background
+  const updateTimerState = useCallback((newState: Partial<TimerState>) => {
+    setTimerState((prevState) => ({ ...prevState, ...newState }));
+  }, []);
+
   useEffect(() => {
-    chrome.storage.sync.get(["defaultTime", "tasks"], (result) => {
-      if (result.defaultTime) {
-        setDefaultTime(result.defaultTime);
+    chrome.storage.local.get(["timerState", "tasks"], (result) => {
+      if (result.timerState) {
+        setTimerState(result.timerState);
       }
       if (result.tasks) {
         setTasks(result.tasks);
       }
     });
 
-    chrome.runtime.sendMessage({ action: "getTimerState" }, (response) => {
-      setTimer(response.timerValue);
-      setIsActive(response.status === "running");
-    });
-
-    // Set up a listener for timer updates from background.ts
     const handleTimerUpdate = (message: any) => {
       if (message.action === "updateTimer") {
-        setTimer(message.timerValue);
+        updateTimerState(message.timerState);
       }
     };
 
     chrome.runtime.onMessage.addListener(handleTimerUpdate);
-
-    // Clean up listener when component unmounts
     return () => {
       chrome.runtime.onMessage.removeListener(handleTimerUpdate);
     };
-  }, []);
+  }, [updateTimerState]);
 
-  // Save tasks to sync when tasks change
   useEffect(() => {
     if (tasks.length > 0) {
-      chrome.storage.sync.set({ tasks });
+      chrome.storage.local.set({ tasks });
     }
   }, [tasks]);
 
-  // Start/stop/reset the timer by sending messages to background.ts
-  const startTimer = () => {
-    chrome.runtime.sendMessage({ action: "startTimer" }, (response) => {
-      setIsActive(true);
-      setTimer(response.timerValue);
-    });
-  };
+  const sendTimerAction = useCallback(
+    (action: string, data = {}) => {
+      chrome.runtime.sendMessage({ action, ...data }, (response) => {
+        if (response) {
+          updateTimerState(response);
+        }
+      });
+    },
+    [updateTimerState]
+  );
 
-  const stopTimer = () => {
-    chrome.runtime.sendMessage({ action: "stopTimer" }, (response) => {
-      setIsActive(false);
-      setTimer(response.timerValue);
-    });
-  };
+  const startTimer = () => sendTimerAction("startTimer");
+  const stopTimer = () => sendTimerAction("stopTimer");
+  const resetTimer = () =>
+    sendTimerAction("resetTimer", { defaultTime: timerState.defaultTime });
 
-  const resetTimer = () => {
-    chrome.runtime.sendMessage(
-      { action: "resetTimer", defaultTime },
-      (response) => {
-        setIsActive(false);
-        setTimer(response.timerValue);
-      }
-    );
-  };
-
-  // Format the time to display as MM:SS
   const formatTime = (time: number): string => {
     const minutes = Math.floor(time / 60);
     const seconds = time % 60;
@@ -85,6 +73,8 @@ function App() {
       .toString()
       .padStart(2, "0")}`;
   };
+
+  const isBreakTime = timerState.value <= 5 * 60; // Assuming break time is 5 minutes or less
 
   return (
     <div className="flex flex-col items-center justify-start h-[600px] bg-gray-900 p-6 overflow-y-auto min-w-[350px]">
@@ -95,18 +85,26 @@ function App() {
       />
       <div className="bg-gray-800 p-6 shadow-lg w-full rounded-xl flex flex-col">
         <h1 className="text-indigo-400 text-3xl font-bold mb-6 text-center">
-          {formatTime(timer)}
+          {formatTime(timerState.value)}
         </h1>
+        <p className="text-center text-indigo-300 mb-4">
+          {isBreakTime ? "Break Time" : "Focus Time"}
+        </p>
         <div className="flex flex-col gap-3 mb-6">
           <Button
             className="bg-indigo-600 text-white hover:bg-indigo-700 rounded-xl py-3 transition-all duration-300 ease-in-out"
-            onClick={isActive ? stopTimer : startTimer}
+            onClick={timerState.isActive ? stopTimer : startTimer}
           >
-            {isActive ? "Stop Timer" : "Start Timer"}
+            {timerState.isActive ? "Stop Timer" : "Start Timer"}
           </Button>
           <Button
-            className="bg-gray-700 text-indigo-300 hover:bg-gray-600 rounded-xl py-3 transition-all duration-300 ease-in-out"
+            className={`rounded-xl py-3 transition-all duration-300 ease-in-out ${
+              timerState.isActive
+                ? "bg-gray-500 text-gray-400 cursor-not-allowed"
+                : "bg-gray-700 text-indigo-300 hover:bg-gray-600"
+            }`}
             onClick={resetTimer}
+            disabled={timerState.isActive}
           >
             Reset Timer
           </Button>
