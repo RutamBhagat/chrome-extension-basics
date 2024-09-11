@@ -1,6 +1,6 @@
+import { Button, Input } from '@extension/ui';
 import React, { useEffect, useState } from 'react';
 
-import { Button } from '@extension/ui';
 import { exampleThemeStorage } from '@extension/storage';
 import { useStorage } from '@extension/shared';
 
@@ -53,7 +53,7 @@ const Options: React.FC = () => {
             <label htmlFor="name" className="block mb-1">
               Your Name:
             </label>
-            <input
+            <Input
               id="name"
               value={name}
               onChange={e => setName(e.target.value)}
@@ -66,7 +66,7 @@ const Options: React.FC = () => {
             <label htmlFor="notificationTime" className="block mb-1">
               Notification Time (seconds):
             </label>
-            <input
+            <Input
               id="notificationTime"
               value={notificationTimeInSeconds}
               onChange={e => setNotificationTimeInSeconds(parseInt(e.target.value, 10) || 1000)}
