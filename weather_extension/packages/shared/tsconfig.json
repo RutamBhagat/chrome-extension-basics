@@ -1,6 +1,7 @@
 {
   "extends": "@extension/tsconfig/utils",
   "compilerOptions": {
+    "module": "es2022",
     "baseUrl": ".",
     "outDir": "dist",
     "types": ["chrome"]
