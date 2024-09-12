@@ -11,7 +11,7 @@ const sidePanelConfig = {
   },
   permissions: ['sidePanel'],
 };
-
+  
 /**
  * After changing, please reload the extension at `chrome://extensions`
  * @type {chrome.runtime.ManifestV3}
