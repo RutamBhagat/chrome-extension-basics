@@ -1,5 +1,5 @@
-import fs from 'node:fs';
 import deepmerge from 'deepmerge';
+import fs from 'node:fs';
 
 const packageJson = JSON.parse(fs.readFileSync('../package.json', 'utf8'));
 
@@ -39,24 +39,24 @@ const manifest = deepmerge(
       default_icon: 'icon-34.png',
     },
     chrome_url_overrides: {
-      newtab: 'new-tab/index.html',
+      // newtab: 'new-tab/index.html',
     },
     icons: {
       128: 'icon-128.png',
     },
     content_scripts: [
-      {
-        matches: ['http://*/*', 'https://*/*', '<all_urls>'],
-        js: ['content/index.iife.js'],
-      },
-      {
-        matches: ['http://*/*', 'https://*/*', '<all_urls>'],
-        js: ['content-ui/index.iife.js'],
-      },
-      {
-        matches: ['http://*/*', 'https://*/*', '<all_urls>'],
-        css: ['content.css'], // public folder
-      },
+      // {
+      //   matches: ['http://*/*', 'https://*/*', '<all_urls>'],
+      //   js: ['content/index.iife.js'],
+      // },
+      // {
+      //   matches: ['http://*/*', 'https://*/*', '<all_urls>'],
+      //   js: ['content-ui/index.iife.js'],
+      // },
+      // {
+      //   matches: ['http://*/*', 'https://*/*', '<all_urls>'],
+      //   css: ['content.css'], // public folder
+      // },
     ],
     devtools_page: 'devtools/index.html',
     web_accessible_resources: [
