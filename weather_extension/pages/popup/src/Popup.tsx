@@ -8,6 +8,7 @@ import {
   Input,
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
@@ -46,37 +47,37 @@ const Popup = () => {
   };
 
   return (
-    <div className={cn('min-w-80 p-4', theme === 'dark' ? 'bg-gray-900 text-white' : 'bg-white text-gray-900')}>
-      <Card className={cn('bg-transparent', theme === 'dark' ? 'border-gray-700' : 'border-gray-200')}>
+    <div className={cn('min-w-80 p-4', theme === 'dark' ? 'bg-indigo-900 text-white' : 'bg-white text-gray-900')}>
+      <Card className={cn('bg-transparent rounded-xl', theme === 'dark' ? 'border-indigo-700' : 'border-gray-200')}>
         <CardHeader className="flex flex-row items-center justify-between p-4">
           <h1 className="text-2xl font-bold">Weather</h1>
           <ThemeToggle />
         </CardHeader>
         <CardContent>
-          <div className="flex gap-2 mb-4">
-            <Input
-              placeholder="Enter city"
-              value={cityName}
-              onChange={handleCityChange}
-              className={cn(theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-gray-100 border-gray-300')}
-            />
-            <Select value={metric} onValueChange={handleMetricChange}>
-              <SelectTrigger
-                className={cn(
-                  'w-[100px]',
-                  theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-gray-100 border-gray-300',
-                )}>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="metric">Celsius</SelectItem>
-                <SelectItem value="imperial">Fahrenheit</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
           {isPending && <LoadingState />}
           {isError && <ErrorState error={error} onRetry={refetch} />}
           {weatherData && <WeatherInfo data={weatherData} metric={metric} />}
+          <Input
+            placeholder="Enter city"
+            value={cityName}
+            onChange={handleCityChange}
+            className="p-3 my-3 rounded-lg bg-gray-100 border-gray-800 text-gray-800"
+          />
+          <Select value={metric} onValueChange={handleMetricChange}>
+            <SelectTrigger className="w-full p-3 rounded-lg bg-gray-100 text-gray-800">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="w-[var(--radix-select-trigger-width)] max-h-[var(--radix-select-content-available-height)] rounded-lg bg-gray-100 text-gray-800">
+              <SelectGroup>
+                <SelectItem className="p-2" value="metric">
+                  Celsius
+                </SelectItem>
+                <SelectItem className="p-2" value="imperial">
+                  Fahrenheit
+                </SelectItem>
+              </SelectGroup>
+            </SelectContent>
+          </Select>
         </CardContent>
       </Card>
     </div>
@@ -90,7 +91,10 @@ const ThemeToggle = () => {
       variant="outline"
       size="icon"
       onClick={exampleThemeStorage.toggle}
-      className={cn(theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-gray-100 border-gray-300')}>
+      className={cn(
+        theme === 'dark' ? 'bg-indigo-800 border-indigo-700' : 'bg-gray-100 border-gray-300',
+        'rounded-full',
+      )}>
       {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
     </Button>
   );
@@ -105,7 +109,7 @@ const LoadingState = () => (
 const ErrorState = ({ error, onRetry }: { error: Error; onRetry: () => void }) => (
   <div className="text-center py-4">
     <p className="text-red-500 mb-2">Error: {error.message}</p>
-    <Button onClick={onRetry} variant="outline">
+    <Button onClick={onRetry} variant="outline" className="rounded-full">
       Retry
     </Button>
   </div>
