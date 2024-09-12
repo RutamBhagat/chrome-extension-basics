@@ -1,7 +1,11 @@
 import '@src/Popup.css';
 
+import { Button, Card, CardContent } from '@extension/ui';
+import { Moon, Sun } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { useStorage, withErrorBoundary, withSuspense } from '@extension/shared';
-import { useEffect, useState, type ComponentPropsWithoutRef } from 'react';
+
+import { cn } from '@extension/ui/lib/utils';
 import { exampleThemeStorage } from '@extension/storage';
 
 const notificationOptions = {
@@ -11,10 +15,10 @@ const notificationOptions = {
   message: 'You cannot inject script here!',
 } as const;
 
-const Popup = () => {
-  const [currentTime, setCurrentTime] = useState('');
-  const [name, setName] = useState('');
-  const [timer, setTimer] = useState(0);
+const Popup: React.FC = () => {
+  const [currentTime, setCurrentTime] = useState<string>('');
+  const [name, setName] = useState<string>('');
+  const [timer, setTimer] = useState<number>(0);
 
   useEffect(() => {
     const intervalId = setInterval(() => {
@@ -30,7 +34,7 @@ const Popup = () => {
 
     const setNameFromStorage = async () => {
       const nameFromStorage = await chrome.storage.sync.get('name');
-      setName(nameFromStorage.name || '???');
+      setName(nameFromStorage.name || 'User');
     };
 
     const setTimerFromStorage = async () => {
@@ -41,7 +45,6 @@ const Popup = () => {
     setTimerFromStorage();
     setNameFromStorage();
 
-    // Listen for changes to local storage
     const handleStorageChange = (changes: { [key: string]: chrome.storage.StorageChange }) => {
       if (changes.timer) {
         setTimer(changes.timer.newValue || 0);
@@ -60,61 +63,55 @@ const Popup = () => {
   const isLight = theme === 'light';
   const logo = isLight ? 'popup/logo_vertical.svg' : 'popup/logo_vertical_dark.svg';
 
-  const injectContentScript = async () => {
-    const [tab] = await chrome.tabs.query({ currentWindow: true, active: true });
-
-    if (tab.url!.startsWith('about:') || tab.url!.startsWith('chrome:')) {
-      chrome.notifications.create('inject-error', notificationOptions);
-    }
-
-    await chrome.scripting
-      .executeScript({
-        target: { tabId: tab.id! },
-        files: ['/content-runtime/index.iife.js'],
-      })
-      .catch(err => {
-        if (err.message.includes('Cannot access a chrome:// URL')) {
-          chrome.notifications.create('inject-error', notificationOptions);
-        }
-      });
-  };
-
   return (
-    <div className={`App ${isLight ? 'bg-slate-50' : 'bg-gray-800'}`}>
-      <header className={`App-header ${isLight ? 'text-gray-900' : 'text-gray-100'}`}>
-        <img src={chrome.runtime.getURL(logo)} className="App-logo pt-4" alt="logo" />
-        <div className="">
-          <h1>Timer Extension</h1>
-          <div className="card">
-            <div>Time is {currentTime}</div>
-          </div>
-          <div className="card">
-            <div>Your name is {name}</div>
-          </div>
-          <div className="card">
-            <div>The timer is at: {timer} seconds</div>
-          </div>
-          <ToggleButton>Toggle theme</ToggleButton>
-        </div>
+    <div
+      className={cn(
+        'w-80 min-h-[400px] p-6 rounded-lg',
+        isLight ? 'bg-white text-gray-800' : 'bg-gray-900 text-white',
+      )}>
+      <header className="flex justify-between items-center mb-6">
+        <img src={chrome.runtime.getURL(logo)} className="w-12 h-12" alt="logo" />
+        <h1 className="text-xl font-bold">Timer Extension</h1>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={exampleThemeStorage.toggle}
+          className={cn('rounded-full', isLight ? 'hover:bg-gray-200' : 'hover:bg-gray-800')}>
+          {isLight ? <Moon size={20} /> : <Sun size={20} />}
+        </Button>
       </header>
+
+      <Card className={cn('mb-4', isLight ? 'bg-gray-100' : 'bg-gray-800')}>
+        <CardContent className="p-4">
+          <div className="flex justify-between items-center">
+            <span className="text-sm font-medium opacity-70">Current Time</span>
+            <span className="text-lg font-bold">{currentTime}</span>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className={cn('mb-4', isLight ? 'bg-gray-100' : 'bg-gray-800')}>
+        <CardContent className="p-4">
+          <div className="flex justify-between items-center">
+            <span className="text-sm font-medium opacity-70">Your Name</span>
+            <span className="text-lg font-bold">{name}</span>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className={cn(isLight ? 'bg-gray-100' : 'bg-gray-800')}>
+        <CardContent className="p-4">
+          <div className="flex justify-between items-center">
+            <span className="text-sm font-medium opacity-70">Timer</span>
+            <span className="text-lg font-bold">{timer} seconds</span>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
 
-const ToggleButton = (props: ComponentPropsWithoutRef<'button'>) => {
-  const theme = useStorage(exampleThemeStorage);
-  return (
-    <button
-      className={
-        props.className +
-        ' ' +
-        'font-bold mt-4 py-1 px-4 rounded shadow hover:scale-105 ' +
-        (theme === 'light' ? 'bg-white text-black shadow-black' : 'bg-black text-white')
-      }
-      onClick={exampleThemeStorage.toggle}>
-      {props.children}
-    </button>
-  );
-};
-
-export default withErrorBoundary(withSuspense(Popup, <div> Loading ... </div>), <div> Error Occur </div>);
+export default withErrorBoundary(
+  withSuspense(Popup, <div className="flex items-center justify-center h-full text-lg">Loading...</div>),
+  <div className="flex items-center justify-center h-full text-lg text-red-500">An error occurred</div>,
+);
