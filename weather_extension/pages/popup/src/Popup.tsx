@@ -58,7 +58,7 @@ const Popup = () => {
         <CardContent>
           {isPending && <LoadingState />}
           {isError && <ErrorState error={error} onRetry={refetch} />}
-          {weatherData && <WeatherInfo data={weatherData} metric={metric} />}
+          <WeatherInfo data={weatherData} metric={metric} />
           <Input
             placeholder="Enter city"
             value={cityName}
