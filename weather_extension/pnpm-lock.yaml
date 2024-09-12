@@ -244,6 +244,9 @@ importers:
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
+      lucide-react:
+        specifier: ^0.441.0
+        version: 0.441.0(react@18.3.1)
       tailwind-merge:
         specifier: ^2.5.2
         version: 2.5.2
@@ -251,6 +254,15 @@ importers:
         specifier: ^1.0.7
         version: 1.0.7(tailwindcss@3.4.10(ts-node@10.9.2(@swc/core@1.7.25)(@types/node@20.16.5)(typescript@5.5.4)))
     devDependencies:
+      '@extension/shared':
+        specifier: workspace:*
+        version: link:../shared
+      '@extension/storage':
+        specifier: workspace:*
+        version: link:../storage
+      '@extension/tailwindcss-config':
+        specifier: workspace:*
+        version: link:../tailwind-config
       '@extension/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
@@ -476,9 +488,6 @@ importers:
       '@tanstack/react-query-devtools':
         specifier: ^5.56.1
         version: 5.56.1(@tanstack/react-query@5.56.0(react@18.3.1))(react@18.3.1)
-      lucide-react:
-        specifier: ^0.441.0
-        version: 0.441.0(react@18.3.1)
       tailwindcss-animate:
         specifier: ^1.0.7
         version: 1.0.7(tailwindcss@3.4.10(ts-node@10.9.2(@swc/core@1.7.25)(@types/node@20.16.5)(typescript@5.5.4)))
