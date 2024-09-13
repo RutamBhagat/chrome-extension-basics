@@ -1,8 +1,10 @@
 import '@src/NewTab.css';
 import '@src/NewTab.scss';
+
 import { useStorage, withErrorBoundary, withSuspense } from '@extension/shared';
+
+import { Button } from '@extension/ui/lib/components/ui';
 import { exampleThemeStorage } from '@extension/storage';
-import { Button } from '@extension/ui';
 import { t } from '@extension/i18n';
 
 const NewTab = () => {

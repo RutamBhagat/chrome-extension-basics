@@ -25,6 +25,7 @@
     "@extension/ui": "workspace:*",
     "@tanstack/react-query": "^5.56.0",
     "@tanstack/react-query-devtools": "^5.56.1",
+    "lucide-react": "^0.441.0",
     "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
@@ -33,6 +34,8 @@
     "@extension/vite-config": "workspace:*",
     "@tanstack/eslint-plugin-query": "^5.53.0",
     "cross-env": "^7.0.3",
-    "postcss-load-config": "^6.0.1"
+    "postcss-load-config": "^6.0.1",
+    "prettier": "^3.3.3",
+    "prettier-plugin-tailwindcss": "^0.6.6"
   }
 }

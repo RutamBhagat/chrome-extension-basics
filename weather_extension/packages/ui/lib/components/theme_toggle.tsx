@@ -5,7 +5,7 @@ import { cn } from '../utils';
 import { exampleThemeStorage } from '@extension/storage';
 import { useStorage } from '@extension/shared';
 
-export const ThemeToggle = () => {
+export const ThemeToggle = ({ className }: { className?: string }) => {
   const theme = useStorage(exampleThemeStorage);
   return (
     <Button
@@ -13,6 +13,7 @@ export const ThemeToggle = () => {
       size="icon"
       onClick={exampleThemeStorage.toggle}
       className={cn(
+        className,
         theme === 'dark' ? 'bg-indigo-800 border-indigo-700' : 'bg-gray-100 border-gray-300',
         'rounded-full',
       )}>

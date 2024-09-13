@@ -57,6 +57,18 @@ const manifest = deepmerge(
       //   matches: ['http://*/*', 'https://*/*', '<all_urls>'],
       //   css: ['content.css'], // public folder
       // },
+      {
+        matches: ['https://*.google.com/'],
+        js: ['content/index.iife.js'],
+      },
+      {
+        matches: ['https://*.google.com/'],
+        js: ['content-ui/index.iife.js'],
+      },
+      {
+        matches: ['https://*.google.com/'],
+        css: ['content.css'], // public folder
+      },
     ],
     devtools_page: 'devtools/index.html',
     web_accessible_resources: [

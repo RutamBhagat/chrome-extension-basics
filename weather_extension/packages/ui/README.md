@@ -80,7 +80,7 @@ export function Button({ theme, className, children, ...props }: ButtonProps) {
 ## Usage
 
 ```tsx
-import { Button } from '@extension/ui';
+import { Button } from '@extension/ui/lib/components/ui';
 
 export default function ToggleButton() {
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
