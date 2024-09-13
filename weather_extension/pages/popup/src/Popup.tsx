@@ -1,8 +1,8 @@
 import '@src/Popup.css';
 
 import { Button, Card, CardContent, CardHeader, Input } from '@extension/ui/lib/components/ui';
-import { CloudRain, Home, Search, Thermometer, Wind } from 'lucide-react';
 import { ErrorState, SkeletonCard, ThemeToggle } from '@extension/ui';
+import { Home, Search, Thermometer, Wind } from 'lucide-react';
 import { TWeatherData, useStorage, withErrorBoundary, withSuspense } from '@extension/shared';
 import { useEffect, useState } from 'react';
 
@@ -107,11 +107,14 @@ interface WeatherInfoProps {
 }
 
 const WeatherInfo: React.FC<WeatherInfoProps> = ({ data, metric }) => {
+  const iconCode = data.weather[0].icon;
+  const iconUrl = `https://openweathermap.org/img/wn/${iconCode}@2x.png`;
+
   return (
     <CardContent className="text-center mb-4">
       <h2 className="text-3xl font-bold mb-2">{data.name}</h2>
       <div className="flex justify-center items-center mb-4">
-        <CloudRain className="h-12 w-12 mr-2" />
+        <img src={iconUrl} alt={data.weather[0].description} className="h-12 w-12 mr-2" />
         <span className="text-4xl font-bold">
           {data.main.temp.toFixed(1)}°{metric === 'metric' ? 'C' : 'F'}
         </span>
