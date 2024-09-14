@@ -14,7 +14,6 @@ import { useQuery } from '@tanstack/react-query';
 const Popup = () => {
   const theme = useStorage(exampleThemeStorage);
   const [cityName, setCityName] = useState('');
-  const [currentCity, setCurrentCity] = useState('London');
   const [metric, setMetric] = useState<'metric' | 'imperial'>('metric');
   const [showHomeWeather, setShowHomeWeather] = useState(false);
   const [homeCityWeatherData, setHomeCityWeatherData] = useState<TWeatherData>();
@@ -24,8 +23,9 @@ const Popup = () => {
     isLoading,
     refetch,
   } = useQuery({
-    queryKey: ['weatherData', currentCity, metric],
-    queryFn: () => fetchOpenWeatherData(currentCity, metric),
+    queryKey: ['weatherData', cityName, metric],
+    queryFn: () => fetchOpenWeatherData(cityName, metric),
+    enabled: !!cityName,
   });
 
   useEffect(() => {
@@ -34,13 +34,16 @@ const Popup = () => {
         setHomeCityWeatherData(data);
       });
     });
+
+    chrome.storage.sync.get(['cityName'], result => {
+      setCityName(result.cityName || 'London');
+    });
   }, [metric]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (cityName) {
-      setCurrentCity(cityName);
-      setCityName('');
+      chrome.storage.sync.set({ cityName });
       refetch();
     }
   };

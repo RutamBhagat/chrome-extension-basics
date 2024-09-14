@@ -1,0 +1,13 @@
+{
+  "name": "@extension/tailwindcss-config",
+  "version": "0.3.2",
+  "description": "chrome extension - tailwindcss configuration",
+  "main": "tailwind.config.ts",
+  "private": true,
+  "dependencies": {
+    "class-variance-authority": "^0.7.0",
+    "clsx": "^2.1.1",
+    "tailwind-merge": "^2.5.2",
+    "tailwindcss-animate": "^1.0.7"
+  }
+}
